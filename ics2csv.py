@@ -35,15 +35,20 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('file', metavar='FILE', help='icalendar file')
     parser.add_argument('--output', '-o', help='output file')
-    parser.add_argument('--no-check', '-n', action='store_true',
-                        help='do not check if output file exists (overwrite)')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='do not check if output file exists')
+    parser.add_argument('--no-warn-duplicates', action='store_true',
+                        help='do not warn about possible duplicates')
     args = parser.parse_args()
 
     events = read_icalendar(args.file)
+    remove_malformed(events)
     extract_fields(events)
+    if not args.no_warn_duplicates:
+        check_duplicates(events)
 
     outfname = args.output or '%s.csv' % args.file
-    if not args.no_check:
+    if not args.overwrite:
         check_if_exists(outfname)
 
     with open(outfname, 'wt') as outfile:
@@ -61,6 +66,17 @@ def check_if_exists(fname):
         answer = input('File %s already exists. Overwrite? [y/n] ' % fname)
         if not answer.lower().startswith('y'):
             sys.exit('Cancelling.')
+
+
+def remove_malformed(events):
+    bad_events = []
+    for i, event in enumerate(events):
+        if ('DESCRIPTION' not in event or
+            not event['DESCRIPTION'].startswith('<a href=')):
+            print('Event %d has bad DESCRIPTION. Skipping.' % (i + 1))
+            bad_events.append(i)
+    for i in bad_events[::-1]:
+        events.pop(i)
 
 
 def extract_fields(events):
@@ -90,24 +106,26 @@ def extract_title_and_link(events):
     "Create fields 'TITLE' and 'LINK', and update 'DESCRIPTION' for all events"
     # event['DESCRIPTION'] is expected to look like:
     # '<a href="[link]">[title]</a>[description]'
-
-    bad_events = []
     for i, event in enumerate(events):
-        if ('DESCRIPTION' not in event or
-            not event['DESCRIPTION'].startswith('<a href=')):
-            print('Event %d has bad DESCRIPTION. Skipping.' % (i + 1))
-            bad_events.append(i)
-        else:
-            desc = event['DESCRIPTION']
-            link_start = desc.find('href=') + 5
-            link_end = desc.find('>')
-            text_end = desc.find('</a>')
-            event['TITLE'] = desc[link_end+1:text_end].strip()
-            event['LINK'] = desc[link_start:link_end].strip('"')
-            event['DESCRIPTION'] = desc[text_end+4:].strip()
+        desc = event['DESCRIPTION']
+        link_start = desc.find('href=') + 5
+        link_end = desc.find('>')
+        text_end = desc.find('</a>')
+        event['TITLE'] = desc[link_end+1:text_end].strip()
+        event['LINK'] = desc[link_start:link_end].strip('"')
+        event['DESCRIPTION'] = desc[text_end+4:].strip()
 
-    for i in bad_events[::-1]:
-        events.pop(i)
+
+def check_duplicates(events):
+    titles = [event['TITLE'] for event in events]
+    locations = [event['LOCATION'] for event in events]
+    for i in range(len(events)):
+        title, location = titles[i], locations[i]
+        dups = [j for j in range(i + 1, len(events))
+                if titles[j] == title and locations[j] == location]
+        if dups:
+            print('Warning: event %d seems to have duplicates: %s' %
+                  (i + 1, ','.join('%d' % (j + 1) for j in dups)))
 
 
 def read_icalendar(fname):
