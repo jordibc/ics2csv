@@ -80,40 +80,39 @@ def remove_malformed(events):
 
 
 def extract_fields(events):
-    extract_title_and_link(events)
-    extract_dates(events)
-
-
-def extract_dates(events):
-    "Create field 'DATE' with its correct readable form for all events"
     for event in events:
-        if 'DTSTART;VALUE=DATE' in event:
-            date = event['DTSTART;VALUE=DATE']
-            event['DATE'] = '%s/%s/%s' % (date[6:8], date[4:6], date[:4])
-        elif 'DTSTART;TZID=Europe/Madrid' in event:
-            date = datetime.strptime(event['DTSTART;TZID=Europe/Madrid'],
-                                     '%Y%m%dT%H%M%S')
-            event['DATE'] = date.strftime('%d/%m/%Y %H:%M')
-        elif 'DTSTART' in event:
-            date = datetime.strptime(event['DTSTART'],
-                                     '%Y%m%dT%H%M%SZ') + timedelta(hours=1)
-            event['DATE'] = date.strftime('%d/%m/%Y %H:%M')
-        else:
-            raise RuntimeError('Missing date in event: %s' % event)
+        extract_title_and_link(event)
+        extract_date(event)
 
 
-def extract_title_and_link(events):
-    "Create fields 'TITLE' and 'LINK', and update 'DESCRIPTION' for all events"
+def extract_title_and_link(event):
+    "Create fields 'TITLE' and 'LINK', and update 'DESCRIPTION'"
     # event['DESCRIPTION'] is expected to look like:
     # '<a href="[link]">[title]</a>[description]'
-    for i, event in enumerate(events):
-        desc = event['DESCRIPTION']
-        link_start = desc.find('href=') + 5
-        link_end = desc.find('>')
-        text_end = desc.find('</a>')
-        event['TITLE'] = desc[link_end+1:text_end].strip()
-        event['LINK'] = desc[link_start:link_end].strip('"')
-        event['DESCRIPTION'] = desc[text_end+4:].strip()
+    desc = event['DESCRIPTION']
+    link_start = desc.find('href=') + 5
+    link_end = desc.find('>')
+    text_end = desc.find('</a>')
+    event['TITLE'] = desc[link_end+1:text_end].strip()
+    event['LINK'] = desc[link_start:link_end].strip('"')
+    event['DESCRIPTION'] = desc[text_end+4:].strip()
+
+
+def extract_date(event):
+    "Create field 'DATE' with its correct readable form"
+    if 'DTSTART;VALUE=DATE' in event:
+        date = event['DTSTART;VALUE=DATE']
+        event['DATE'] = '%s/%s/%s' % (date[6:8], date[4:6], date[:4])
+    elif 'DTSTART;TZID=Europe/Madrid' in event:
+        date = datetime.strptime(event['DTSTART;TZID=Europe/Madrid'],
+                                 '%Y%m%dT%H%M%S')
+        event['DATE'] = date.strftime('%d/%m/%Y %H:%M')
+    elif 'DTSTART' in event:
+        date = datetime.strptime(event['DTSTART'],
+                                 '%Y%m%dT%H%M%SZ') + timedelta(hours=1)
+        event['DATE'] = date.strftime('%d/%m/%Y %H:%M')
+    else:
+        raise RuntimeError('Missing date in event: %s' % event)
 
 
 def check_duplicates(events):
