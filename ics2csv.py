@@ -114,15 +114,14 @@ def extract_date(event):
 
 
 def check_duplicates(events):
-    titles = [event['TITLE'] for event in events]
-    locations = [event['LOCATION'] for event in events]
-    for i in range(len(events)):
-        title, location = titles[i], locations[i]
-        dups = [j for j in range(i + 1, len(events))
-                if titles[j] == title and locations[j] == location]
-        if dups:
-            print('Warning: event %d seems to have duplicates: %s' %
-                  (i + 1, ','.join('%d' % (j + 1) for j in dups)))
+    seen = {}
+    for i, event in enumerate(events):
+        identifier = (event['TITLE'], event['LOCATION'])
+        if identifier in seen:
+            print('Warning: event %d seems to be a duplicate of %d' %
+                  (i + 1, seen[identifier] + 1))
+        else:
+            seen[identifier] = i
 
 
 def read_icalendar(fname):
