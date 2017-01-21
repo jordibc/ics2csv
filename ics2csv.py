@@ -1,38 +1,27 @@
 #!/usr/bin/env python3
 
 """
-Crea un fichero csv a partir de un icalendar, para los eventos
-del Día Internacional de la Mujer y la Niña en la Ciencia
-(11 de febrero).
+Crea un fichero csv a partir de un icalendar, para los eventos del
+Día Internacional de la Mujer y la Niña en la Ciencia (11 de febrero).
+
+En el fichero están los siguientes campos:
+* Título (sacado de la descripción)
+* Descripción (modificada, sin título ni enlace)
+* Fecha
+* Lugar
+* Enlace (sacado de la descripción)
 """
 
 # For the csv specs: https://en.wikipedia.org/wiki/Comma-separated_values
 
 import sys
 import os
-import argparse
-from collections import OrderedDict
+from argparse import ArgumentParser, RawDescriptionHelpFormatter as fmt
 from datetime import datetime, timedelta
 
 
-# Lo que queremos:
-#   Título (sacado de la descripción)
-#   Descripción
-#   Fecha
-#   Lugar
-#   Enlace (sacado de la descripción)
-
-important_fields = OrderedDict([
-    ('TITLE', 'Título'),
-    ('DESCRIPTION', 'Descripción'),
-    ('DATE', 'Fecha'),
-    ('LOCATION', 'Lugar'),
-    ('LINK', 'Enlace')])
-
-
-
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = ArgumentParser(description=__doc__, formatter_class=fmt)
     parser.add_argument('file', metavar='FILE', help='icalendar file')
     parser.add_argument('--output', '-o', help='output file')
     parser.add_argument('--overwrite', action='store_true',
@@ -51,14 +40,23 @@ def main():
     if not args.overwrite:
         check_if_exists(outfname)
 
-    with open(outfname, 'wt') as outfile:
-        outfile.write(','.join(important_fields.values()) + '\n')
+    write_fields_csv(events, outfname)
+
+
+def write_fields_csv(events, fname):
+    "Write in file fname some of the events fields, as comma-separated values"
+    fields_codes, fields_names = zip(*[
+        ('TITLE',       'Título'),
+        ('DESCRIPTION', 'Descripción'),
+        ('DATE',        'Fecha'),
+        ('LOCATION',    'Lugar'),
+        ('LINK',        'Enlace')])
+    with open(fname, 'wt') as out:
+        out.write(','.join(fields_names) + '\n')
         for event in events:
-            outfile.write(','.join('"%s"' % event.get(field, '')
-                                   for field in important_fields.keys()) + '\n')
-
-    print('The output is in file %s' % outfname)
-
+            out.write(','.join('"%s"' % event.get(field, '')
+                               for field in fields_codes) + '\n')
+    print('The output is in file %s' % fname)
 
 
 def check_if_exists(fname):
