@@ -45,17 +45,16 @@ def main():
 
 def write_fields_csv(events, fname):
     "Write in file fname some of the events fields, as comma-separated values"
-    fields_codes, fields_names = zip(*[
-        ('TITLE',       'Título'),
-        ('DESCRIPTION', 'Descripción'),
-        ('DATE',        'Fecha'),
-        ('LOCATION',    'Lugar'),
-        ('LINK',        'Enlace')])
+    fields, names = zip(*[('TITLE',       'Título'),
+                          ('DESCRIPTION', 'Descripción'),
+                          ('DATE',        'Fecha'),
+                          ('LOCATION',    'Lugar'),
+                          ('LINK',        'Enlace')])
     with open(fname, 'wt') as out:
-        out.write(','.join(fields_names) + '\n')
+        out.write(','.join(names) + '\n')
         for event in events:
-            out.write(','.join('"%s"' % event.get(field, '')
-                               for field in fields_codes) + '\n')
+            out.write(','.join('"%s"' % event.get(field, '').replace('"', '""')
+                               for field in fields) + '\n')
     print('The output is in file %s' % fname)
 
 
@@ -150,9 +149,7 @@ def read_icalendar(fname):
 def add_field(event, field, text):
     "Add field to event, with the given text"
     if field is not None:
-        for x, y in [('\\,', ','), ('"', '""'), ('\\n', '\n')]:
-            text = text.replace(x, y)
-        event[field] = text
+        event[field] = text.replace('\\,', ',').replace('\\n', '\n')
 
 
 
