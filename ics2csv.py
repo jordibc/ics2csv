@@ -113,6 +113,7 @@ def extract_date(event):
 
 
 def check_duplicates(events):
+    "Warn about possible duplicates in events, if any seen"
     seen = {}
     for i, event in enumerate(events):
         identifier = (event['TITLE'], event['LOCATION'])
