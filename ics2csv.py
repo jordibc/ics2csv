@@ -51,10 +51,11 @@ def write_fields_csv(events, fname):
                           ('LOCATION',    'Lugar'),
                           ('LINK',        'Enlace')])
     with open(fname, 'wt') as out:
-        out.write(','.join(names) + '\n')
+        add = lambda xs: out.write(','.join('"%s"' % x for x in xs) + '\n')
+        add(names)
         for event in events:
-            out.write(','.join('"%s"' % event.get(field, '').replace('"', '""')
-                               for field in fields) + '\n')
+            get = lambda field: event.get(field, '').replace('"', '""')
+            add(get(field) for field in fields)
     print('The output is in file %s' % fname)
 
 
