@@ -51,7 +51,7 @@ def write_fields_csv(events, fname):
                           ('LOCATION',    'Lugar'),
                           ('LINK',        'Enlace')])
     get = lambda event, field: event.get(field, '').replace('"', '""')
-    with open(fname, 'wt') as out:
+    with open(fname, mode='wt', encoding='utf8') as out:
         write = lambda xs: out.write(','.join('"%s"' % x for x in xs) + '\n')
         write(names)
         for event in events:
@@ -130,7 +130,7 @@ def read_icalendar(fname):
     events = []
     event, field, text = {}, None, ''
     in_event = False
-    for line in open(fname):
+    for line in open(fname, encoding='utf8'):
         if not in_event:
             if line.startswith('BEGIN:VEVENT'):
                 in_event = True
