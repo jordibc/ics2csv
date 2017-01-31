@@ -120,7 +120,7 @@ def check_duplicates(events):
     "Warn about possible duplicates in events, if any seen"
     seen = {}
     for i, event in enumerate(events):
-        identifier = (event['TITLE'], event['LOCATION'])
+        identifier = (event['TITLE'], event['LOCATION'], event['DATE'])
         if identifier in seen:
             print('Warning: event %d seems to be a duplicate of %d' %
                   (i + 1, seen[identifier] + 1))
