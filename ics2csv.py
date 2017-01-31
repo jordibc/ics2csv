@@ -69,9 +69,12 @@ def check_if_exists(fname):
 def remove_malformed(events):
     bad_events = []
     for i, event in enumerate(events):
-        if ('DESCRIPTION' not in event or
-            not event['DESCRIPTION'].startswith('<a href=')):
-            print('Event %d has bad DESCRIPTION. Skipping.' % (i + 1))
+        if 'DESCRIPTION' not in event:
+            print('Event %d has no DESCRIPTION. Skipping:' % (i + 1))
+            bad_events.append(i)
+        elif not event['DESCRIPTION'].startswith('<a href='):
+            print('Event %d has bad DESCRIPTION. Skipping:' % (i + 1))
+            print('  %s...' % repr(event['DESCRIPTION'][:70]))
             bad_events.append(i)
     for i in bad_events[::-1]:
         events.pop(i)
