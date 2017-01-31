@@ -130,6 +130,7 @@ def read_icalendar(fname):
     events = []
     event, field, text = {}, None, ''
     in_event = False
+    sublevel = 0
     for line in open(fname, encoding='utf8'):
         if not in_event:
             if line.startswith('BEGIN:VEVENT'):
@@ -140,11 +141,17 @@ def read_icalendar(fname):
                 events.append(event)
                 event, field, text = {}, None, ''
                 in_event = False
-            elif line.startswith(' '):
-                text += line[1:].rstrip('\n')
-            else:
+            elif line.startswith('BEGIN:'):
                 add_field(event, field, text)
-                field, text = line.rstrip('\n').split(':', 1)
+                sublevel += 1
+            elif line.startswith('END:'):
+                sublevel -= 1
+            elif sublevel == 0:
+                if line.startswith(' '):
+                    text += line[1:].rstrip('\n')
+                else:
+                    add_field(event, field, text)
+                    field, text = line.rstrip('\n').split(':', 1)
     return events
 
 
