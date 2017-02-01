@@ -72,7 +72,8 @@ def remove_malformed(events):
         if 'DESCRIPTION' not in event:
             print('Error: event %d has no DESCRIPTION. Skipping.' % (i + 1))
             bad_events.append(i)
-        elif not event['DESCRIPTION'].startswith('<a href='):
+        elif (not event['DESCRIPTION'].startswith('<a href=') or
+              event['DESCRIPTION'].find('</a>') < 0):
             print('Error: event %d has bad DESCRIPTION (%r...). Skipping.' %
                   (i + 1, event['DESCRIPTION'][:50]))
             bad_events.append(i)
