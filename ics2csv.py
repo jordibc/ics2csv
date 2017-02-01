@@ -70,11 +70,11 @@ def remove_malformed(events):
     bad_events = []
     for i, event in enumerate(events):
         if 'DESCRIPTION' not in event:
-            print('Event %d has no DESCRIPTION. Skipping.' % (i + 1))
+            print('Error: event %d has no DESCRIPTION. Skipping.' % (i + 1))
             bad_events.append(i)
         elif not event['DESCRIPTION'].startswith('<a href='):
-            print('Event %d has bad DESCRIPTION. Skipping:' % (i + 1))
-            print('  %s...' % repr(event['DESCRIPTION'][:70]))
+            print('Error: event %d has bad DESCRIPTION (%r...). Skipping:' %
+                  (i + 1, event['DESCRIPTION'][:50]))
             bad_events.append(i)
     for i in bad_events[::-1]:
         events.pop(i)
@@ -122,8 +122,8 @@ def check_duplicates(events):
     for i, event in enumerate(events):
         identifier = (event['TITLE'], event['LOCATION'], event['DATE'])
         if identifier in seen:
-            print('Warning: event %d seems to be a duplicate of %d' %
-                  (i + 1, seen[identifier] + 1))
+            print('Warning: event %d seems to be a duplicate of %d %s' %
+                  (i + 1, seen[identifier] + 1, identifier))
         else:
             seen[identifier] = i
 
